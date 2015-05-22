@@ -2,6 +2,7 @@
 using System.Linq;
 using IrcDotNet;
 using static Dice;
+using System;
 
 namespace trurl
 {
@@ -55,7 +56,8 @@ namespace trurl
                         break;
 
                     case "wodroll":
-                        client.LocalUser.SendMessage(replyTarget, "self-explanatory");
+                        client.LocalUser.SendMessage(replyTarget, "wodroll <count>: roll 10-again dice and report successes");
+                        client.LocalUser.SendMessage(replyTarget, "wodroll <count> <n>: roll n-again dice and report successes");
                         break;
                 }
             }
@@ -114,15 +116,29 @@ namespace trurl
 
         private void WodRoll(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
         {
-            CheckParams(parameters, 1);
+            CheckParams(parameters, 1, 2);
 
             var count = int.Parse(parameters[0]);
 
-            var desc = string.Format("{0} dice (10-again)", count);
-            var rolls = N(count, () => D(10), 10).SelectMany(x => x).ToList();
-            var result = Display.Successes(desc, rolls, 8);
+            if (parameters.Count == 2)
+            {
+                var explode = int.Parse(parameters[1]);
+                if (explode < 2) throw new Exception("minimum n-value = 2");
 
-            DisplayRollResult(client, source, targets, result);
+                var desc = string.Format("{0} dice ({1}-again)", count, explode);
+                var rolls = N(count, () => D(10), explode).ToList();
+                var result = Display.ExplodingSuccesses(desc, rolls, 8);
+
+                DisplayRollResult(client, source, targets, result);
+            }
+            else
+            {
+                var desc = string.Format("{0} dice (10-again)", count);
+                var rolls = N(count, () => D(10), 10).ToList();
+                var result = Display.ExplodingSuccesses(desc, rolls, 8);
+
+                DisplayRollResult(client, source, targets, result);
+            }
         }
 
         private void DisplayRollResult(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, Result rollResult)
