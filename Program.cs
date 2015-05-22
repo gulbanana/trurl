@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using IrcDotNet;
 
 namespace trurl
 {
@@ -10,10 +6,17 @@ namespace trurl
     {
         static void Main(string[] args)
         {
-            using (var bot = new Bot())
+            var bot = new Bot();
+            
+            var userInfo = new IrcUserRegistrationInfo()
             {
-                bot.Run();
-            }
+                NickName = "trurl",
+                UserName = "trurl",
+                RealName = "Trurl Klapaucius, Cyberiad Dicebot"
+            };
+
+            //blocks until bot.Stop() is called or 'exit' is entered on the commandline
+            bot.Run("irc.sorcery.net", userInfo, new[] { "#au-ooc", "#aurora" });
         }
     }
 }

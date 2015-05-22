@@ -48,13 +48,10 @@
   <ItemGroup>
     <Compile Include="Bot.cs" />
     <Compile Include="Commands.cs" />
-    <Compile Include="Samples.Common\BasicIrcBot.cs" />
-    <Compile Include="Samples.Common\ConsoleUtilities.cs" />
-    <Compile Include="Samples.Common\InvalidCommandParametersException.cs" />
-    <Compile Include="Samples.Common\IrcBot.cs" />
-    <Compile Include="Samples.Common\IrcBotException.cs" />
-    <Compile Include="Samples.Common\IrcBotUtilities.cs" />
-    <Compile Include="Samples.Common\ProgramInfo.cs" />
+    <Compile Include="Infrastructure\InsufficientPrivilegeException.cs" />
+    <Compile Include="Infrastructure\InvalidCommandParametersException.cs" />
+    <Compile Include="Infrastructure\BotBase.cs" />
+    <Compile Include="Infrastructure\IrcBotException.cs" />
     <Compile Include="Dice.cs" />
     <Compile Include="Display.cs" />
     <Compile Include="Program.cs" />

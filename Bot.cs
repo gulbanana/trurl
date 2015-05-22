@@ -4,67 +4,46 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using IrcDotNet;
-using IrcDotNet.Samples.Common;
 
 namespace trurl
 {
-    class Bot : BasicIrcBot
+    class Bot : BotBase
     {
-        public override IrcRegistrationInfo RegistrationInfo
+        public Bot() : base() { }
+
+        protected override void InitializeChatCommandProcessors()
         {
-            get
-            {
-                return new IrcUserRegistrationInfo()
-                {
-                    NickName = "trurl",
-                    UserName = "trurl",
-                    RealName = "Trurl Klapaucius, Cyberiad Dicebot"
-                };
-            }
+            this.ChatCommandProcessors.Add("help", ProcessChatCommandHelp);
+            this.ChatCommandProcessors.Add("quit", ProcessChatCommandQuit);
         }
 
-        protected override void OnChannelMessageReceived(IrcChannel channel, IrcMessageEventArgs e)
+        private void ProcessChatCommandHelp(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
         {
+            CheckParams(parameters, 0);
+
+            // List all commands recognized by this bot.
+            var replyTarget = GetDefaultReplyTarget(client, source, targets);
+            client.LocalUser.SendMessage(replyTarget, "I know these commands:");
+            client.LocalUser.SendMessage(replyTarget, string.Join(", ",
+                this.ChatCommandProcessors.Select(kvPair => "!" + kvPair.Key)));
         }
 
-        protected override void OnChannelNoticeReceived(IrcChannel channel, IrcMessageEventArgs e)
+        private void ProcessChatCommandQuit(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
         {
+            CheckParams(parameters, 0);
+            CheckAdmin(source);
+
+            this.Stop();
         }
 
-        protected override void OnChannelUserJoined(IrcChannel channel, IrcChannelUserEventArgs e)
+        private void CheckParams(IList<string> parameters, int expected)
         {
+            if (parameters.Count != expected) throw new InvalidCommandParametersException(expected);
         }
 
-        protected override void OnChannelUserLeft(IrcChannel channel, IrcChannelUserEventArgs e)
+        private void CheckAdmin(IIrcMessageSource source)
         {
-        }
-
-        protected override void OnClientConnect(IrcClient client)
-        {
-        }
-
-        protected override void OnClientDisconnect(IrcClient client)
-        {
-        }
-
-        protected override void OnClientRegistered(IrcClient client)
-        {
-        }
-
-        protected override void OnLocalUserJoinedChannel(IrcLocalUser localUser, IrcChannelEventArgs e)
-        {
-        }
-
-        protected override void OnLocalUserLeftChannel(IrcLocalUser localUser, IrcChannelEventArgs e)
-        {
-        }
-
-        protected override void OnLocalUserMessageReceived(IrcLocalUser localUser, IrcMessageEventArgs e)
-        {
-        }
-
-        protected override void OnLocalUserNoticeReceived(IrcLocalUser localUser, IrcMessageEventArgs e)
-        {
+            if (source.Name != "banana") throw new InsufficientPrivilegeException();
         }
     }
 }

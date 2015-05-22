@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace IrcDotNet.Samples.Common
+namespace trurl
 {
     public class IrcBotException : Exception
     {

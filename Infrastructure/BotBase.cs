@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using IrcDotNet;
+using System.Runtime.InteropServices;
 
-namespace IrcDotNet.Samples.Common
+namespace trurl
 {
-    // Provides core functionality for an IRC bot that operates via multiple clients.
-    public abstract class IrcBot : IDisposable
+    // Provides core functionality for a single-server IRC bot - originally adapted from the multiclient framework in IrcDotNet samples.
+    public abstract class BotBase
     {
         private const int clientQuitTimeout = 1000;
 
@@ -19,40 +19,21 @@ namespace IrcDotNet.Samples.Common
         // Dictionary of all chat command processors, keyed by name.
         private IDictionary<string, ChatCommandProcessor> chatCommandProcessors;
 
-        // Internal and exposable collection of all clients that communicate individually with servers.
-        private Collection<IrcClient> allClients;
-        private ReadOnlyCollection<IrcClient> allClientsReadOnly;
-
-        // Dictionary of all command processors, keyed by name.
-        private IDictionary<string, CommandProcessor> commandProcessors;
-
         // True if the read loop is currently active, false if ready to terminate.
         private bool isRunning;
 
-        private bool isDisposed = false;
+        IrcClient client;
 
-        public IrcBot()
+        public BotBase()
         {
             this.isRunning = false;
-            this.commandProcessors = new Dictionary<string, CommandProcessor>(
-                StringComparer.InvariantCultureIgnoreCase);
-            InitializeCommandProcessors();
-
-            this.allClients = new Collection<IrcClient>();
-            this.allClientsReadOnly = new ReadOnlyCollection<IrcClient>(this.allClients);
-            this.chatCommandProcessors = new Dictionary<string, ChatCommandProcessor>(
-                StringComparer.InvariantCultureIgnoreCase);
+            this.chatCommandProcessors = new Dictionary<string, ChatCommandProcessor>(StringComparer.InvariantCultureIgnoreCase);
             InitializeChatCommandProcessors();
-        }
-
-        ~IrcBot()
-        {
-            Dispose(false);
         }
 
         public virtual string QuitMessage
         {
-            get { return null; }
+            get { return "We want the Demon, you see, to extract from the dance of atoms only information that is genuine."; }
         }
 
         protected IDictionary<string, ChatCommandProcessor> ChatCommandProcessors
@@ -60,90 +41,44 @@ namespace IrcDotNet.Samples.Common
             get { return this.chatCommandProcessors; }
         }
 
-        public ReadOnlyCollection<IrcClient> Clients
+        public void Run(string server, IrcRegistrationInfo registrationInfo, IEnumerable<string> channels)
         {
-            get { return this.allClientsReadOnly; }
-        }
-
-        protected IDictionary<string, CommandProcessor> CommandProcessors
-        {
-            get { return this.commandProcessors; }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected void Dispose(bool disposing)
-        {
-            if (!this.isDisposed)
-            {
-                if (disposing)
-                {
-                    // Disconnect each client gracefully.
-                    foreach (var client in allClients)
-                    {
-                        if (client != null)
-                        {
-                            client.Quit(clientQuitTimeout, this.QuitMessage);
-                            client.Dispose();
-                        }
-                    }
-                }
-            }
-            this.isDisposed = true;
-        }
-
-        public void Run()
-        {
-            // Read commands from stdin until bot terminates.
             this.isRunning = true;
+
+            client = Connect(server, registrationInfo);
+            client.Registered += (s, e) =>
+            {
+                foreach (var channel in channels)
+                    Join(client, channel);
+            };
+
+            // Read commands from stdin until bot terminates.
             while (this.isRunning)
             {
-                Console.Write("> ");
+                Console.WriteLine("bot running - type 'exit' or send !quit in irc to exit");
                 var line = Console.ReadLine();
                 if (line == null)
                     break;
                 if (line.Length == 0)
                     continue;
 
-                var parts = line.Split(' ');
-                var command = parts[0].ToLower();
-                var parameters = parts.Skip(1).ToArray();
-                ReadCommand(command, parameters);
+                if (line.Equals("exit"))
+                    this.isRunning = false;
+                else
+                    Console.WriteLine("unrecognised command (use 'exit' to quit)");
             }
+
+            Disconnect(client);
         }
 
         public void Stop()
         {
             this.isRunning = false;
+            Disconnect(client);
+            Environment.Exit(0);
         }
 
-        protected abstract void InitializeCommandProcessors();
-
-        private void ReadCommand(string command, IList<string> parameters)
-        {
-            CommandProcessor processor;
-            if (this.commandProcessors.TryGetValue(command, out processor))
-            {
-                try
-                {
-                    processor(command, parameters);
-                }
-                catch (Exception ex)
-                {
-                    ConsoleUtilities.WriteError("Error: {0}", ex.Message);
-                }
-            }
-            else
-            {
-                ConsoleUtilities.WriteError("Command '{0}' not recognized.", command);
-            }
-        }
-
-        protected void Connect(string server, IrcRegistrationInfo registrationInfo)
+        private IrcClient Connect(string server, IrcRegistrationInfo registrationInfo)
         {
             // Create new IRC client and connect to given server.
             var client = new IrcClient();
@@ -160,38 +95,38 @@ namespace IrcDotNet.Samples.Common
                 if (!connectedEvent.Wait(10000))
                 {
                     client.Dispose();
-                    ConsoleUtilities.WriteError("Connection to '{0}' timed out.", server);
-                    return;
+                    Console.WriteLine("Connection to '{0}' timed out.", server);
+                    return null;
                 }
             }
 
-            // Add new client to collection.
-            this.allClients.Add(client);
+            Console.WriteLine("Now connected to '{0}'.", server);
 
-            Console.Out.WriteLine("Now connected to '{0}'.", server);
+            // Add new client to collection.
+            return client;
         }
 
-        public void Disconnect(string server)
+        private void Disconnect(IrcClient client)
         {
-            // Disconnect IRC client that is connected to given server.
-            var client = GetClientFromServerNameMask(server);
             var serverName = client.ServerName;
             client.Quit(clientQuitTimeout, this.QuitMessage);
             client.Dispose();
 
-            // Remove client from connection.
-            this.allClients.Remove(client);
-
-            Console.Out.WriteLine("Disconnected from '{0}'.", serverName);
+            Console.WriteLine("Disconnected from '{0}'.", serverName);
         }
 
-        protected abstract void InitializeChatCommandProcessors();
+        private void Join(IrcClient client, string channel)
+        {
+            client.Channels.Join(channel);
+
+            Console.WriteLine("Joined '{0}'.", channel);
+        }
 
         private bool ReadChatCommand(IrcClient client, IrcMessageEventArgs eventArgs)
         {
             // Check if given message represents chat command.
             var line = eventArgs.Text;
-            if (line.Length > 1 && line.StartsWith("."))
+            if (line.Length > 1 && line.StartsWith("!"))
             {
                 // Process command.
                 var parts = commandPartsSplitRegex.Split(line.Substring(1)).Select(p => p.TrimStart('/')).ToArray();
@@ -203,8 +138,7 @@ namespace IrcDotNet.Samples.Common
             return false;
         }
 
-        private void ReadChatCommand(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets,
-            string command, string[] parameters)
+        private void ReadChatCommand(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, string[] parameters)
         {
             var defaultReplyTarget = GetDefaultReplyTarget(client, source, targets);
 
@@ -215,17 +149,19 @@ namespace IrcDotNet.Samples.Common
                 {
                     processor(client, source, targets, command, parameters);
                 }
-                catch (InvalidCommandParametersException exInvalidCommandParameters)
+                catch (InvalidCommandParametersException icpe)
                 {
-                    client.LocalUser.SendNotice(defaultReplyTarget,
-                        exInvalidCommandParameters.GetMessage(command));
+                    client.LocalUser.SendNotice(defaultReplyTarget, icpe.GetMessage(command));
+                }
+                catch (InsufficientPrivilegeException ipe)
+                {
+                    client.LocalUser.SendNotice(defaultReplyTarget, ipe.GetMessage(command));
                 }
                 catch (Exception ex)
                 {
                     if (source is IIrcMessageTarget)
                     {
-                        client.LocalUser.SendNotice(defaultReplyTarget,
-                            "Error processing '{0}' command: {1}", command, ex.Message);
+                        client.LocalUser.SendNotice(defaultReplyTarget, string.Format("Error processing '{0}' command: {1}", command, ex.Message));
                     }
                 }
             }
@@ -233,32 +169,19 @@ namespace IrcDotNet.Samples.Common
             {
                 if (source is IIrcMessageTarget)
                 {
-                    client.LocalUser.SendNotice(defaultReplyTarget, "Command '{0}' not recognized.", command);
+                    client.LocalUser.SendNotice(defaultReplyTarget, string.Format("Command '{0}' not recognized.", command));
                 }
             }
         }
 
-        protected abstract void OnClientConnect(IrcClient client);
+        protected IList<IIrcMessageTarget> GetDefaultReplyTarget(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets)
+        {
+            if (targets.Contains(client.LocalUser) && source is IIrcMessageTarget)
+                return new[] { (IIrcMessageTarget)source };
+            else
+                return targets;
+        }
 
-        protected abstract void OnClientDisconnect(IrcClient client);
-
-        protected abstract void OnClientRegistered(IrcClient client);
-
-        protected abstract void OnLocalUserJoinedChannel(IrcLocalUser localUser, IrcChannelEventArgs e);
-
-        protected abstract void OnLocalUserLeftChannel(IrcLocalUser localUser, IrcChannelEventArgs e);
-
-        protected abstract void OnLocalUserNoticeReceived(IrcLocalUser localUser, IrcMessageEventArgs e);
-
-        protected abstract void OnLocalUserMessageReceived(IrcLocalUser localUser, IrcMessageEventArgs e);
-
-        protected abstract void OnChannelUserJoined(IrcChannel channel, IrcChannelUserEventArgs e);
-
-        protected abstract void OnChannelUserLeft(IrcChannel channel, IrcChannelUserEventArgs e);
-
-        protected abstract void OnChannelNoticeReceived(IrcChannel channel, IrcMessageEventArgs e);
-
-        protected abstract void OnChannelMessageReceived(IrcChannel channel, IrcMessageEventArgs e);
 
         #region IRC Client Event Handlers
 
@@ -372,30 +295,22 @@ namespace IrcDotNet.Samples.Common
 
         #endregion
 
-        protected IList<IIrcMessageTarget> GetDefaultReplyTarget(IrcClient client, IIrcMessageSource source,
-            IList<IIrcMessageTarget> targets)
-        {
-            if (targets.Contains(client.LocalUser) && source is IIrcMessageTarget)
-                return new[] { (IIrcMessageTarget)source };
-            else
-                return targets;
-        }
+        #region "Subclass API"
+        protected abstract void InitializeChatCommandProcessors();
 
-        protected IrcClient GetClientFromServerNameMask(string serverNameMask)
-        {
-            var client = this.Clients.SingleOrDefault(c => c.ServerName != null &&
-                Regex.IsMatch(c.ServerName, serverNameMask, RegexOptions.IgnoreCase));
-            if (client == null)
-            {
-                throw new IrcBotException(IrcBotExceptionType.NoConnection,
-                    string.Format("no connection to {0}", serverNameMask));
-            }
-            return client;
-        }
+        protected virtual void OnClientConnect(IrcClient client) { }
+        protected virtual void OnClientDisconnect(IrcClient client) { }
+        protected virtual void OnClientRegistered(IrcClient client) { }
+        protected virtual void OnLocalUserJoinedChannel(IrcLocalUser localUser, IrcChannelEventArgs e) { }
+        protected virtual void OnLocalUserLeftChannel(IrcLocalUser localUser, IrcChannelEventArgs e) { }
+        protected virtual void OnLocalUserNoticeReceived(IrcLocalUser localUser, IrcMessageEventArgs e) { }
+        protected virtual void OnLocalUserMessageReceived(IrcLocalUser localUser, IrcMessageEventArgs e) { }
+        protected virtual void OnChannelUserJoined(IrcChannel channel, IrcChannelUserEventArgs e) { }
+        protected virtual void OnChannelUserLeft(IrcChannel channel, IrcChannelUserEventArgs e) { }
+        protected virtual void OnChannelNoticeReceived(IrcChannel channel, IrcMessageEventArgs e) { }
+        protected virtual void OnChannelMessageReceived(IrcChannel channel, IrcMessageEventArgs e) { }
+        #endregion
 
-        protected delegate void ChatCommandProcessor(IrcClient client, IIrcMessageSource source,
-            IList<IIrcMessageTarget> targets, string command, IList<string> parameters);
-
-        protected delegate void CommandProcessor(string command, IList<string> parameters);
+        protected delegate void ChatCommandProcessor(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters);
     }
 }

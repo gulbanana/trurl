@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace IrcDotNet.Samples.Common
+namespace trurl
 {
     public class InvalidCommandParametersException : Exception
     {
