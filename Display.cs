@@ -3,24 +3,34 @@ using System.Collections.Generic;
 
 static class Display
 {
-	public static Result Total(string desc, IEnumerable<int> rolls)
+	public static Result Total(string desc, IList<int> rolls)
 	{
 		return new Result {
 			Description = desc,
-			Summary = rolls.Sum().ToString(),
-			Verbose = string.Format("[{0}]", string.Join(" ", rolls))
+			Summary = good(rolls.Sum()),
+			Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => bad(r))))
 		};
 	}
 	
-	public static Result Successes(string desc, IEnumerable<int> rolls, int target)
+	public static Result Successes(string desc, IList<int> rolls, int target)
 	{
 		var ss = rolls.Where(r => r >= target);
-		var fs = ss.Except(ss);
+		var fs = rolls.Where(r => r < target);
 
-		return new Result {
-			Description = desc,
-			Summary = string.Format("[Successes: {0}, Failed: {1}]", ss.Count(), fs.Count()),
-			Verbose = string.Format("[{0}]", string.Join(" ", rolls))
+        return new Result {
+            Description = desc,
+            Summary = string.Format("[Successes: {0}, Failed: {1}]", good(ss.Count()), good(fs.Count())),
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? good(r) : bad(r))))
 		};
 	}
+
+    private static string good(object text)
+    {
+        return string.Format("\x000312{0}\x03", text);
+    }
+
+    private static string bad(object text)
+    {
+        return string.Format("\x000305{0}\x03", text);
+    }
 }

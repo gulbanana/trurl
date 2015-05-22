@@ -17,7 +17,7 @@ namespace trurl
         private static readonly Regex commandPartsSplitRegex = new Regex("(?<! /.*) ", RegexOptions.None);
 
         // Dictionary of all chat command processors, keyed by name.
-        private IDictionary<string, ChatCommandProcessor> chatCommandProcessors;
+        private IDictionary<string, CommandProcessor> commands;
 
         // True if the read loop is currently active, false if ready to terminate.
         private bool isRunning;
@@ -27,8 +27,8 @@ namespace trurl
         public BotBase()
         {
             this.isRunning = false;
-            this.chatCommandProcessors = new Dictionary<string, ChatCommandProcessor>(StringComparer.InvariantCultureIgnoreCase);
-            InitializeChatCommandProcessors();
+            this.commands = new Dictionary<string, CommandProcessor>(StringComparer.InvariantCultureIgnoreCase);
+            InitializeCommands();
         }
 
         public virtual string QuitMessage
@@ -36,9 +36,9 @@ namespace trurl
             get { return "We want the Demon, you see, to extract from the dance of atoms only information that is genuine."; }
         }
 
-        protected IDictionary<string, ChatCommandProcessor> ChatCommandProcessors
+        protected IDictionary<string, CommandProcessor> Commands
         {
-            get { return this.chatCommandProcessors; }
+            get { return this.commands; }
         }
 
         public void Run(string server, IrcRegistrationInfo registrationInfo, IEnumerable<string> channels)
@@ -49,7 +49,7 @@ namespace trurl
             client.Registered += (s, e) =>
             {
                 foreach (var channel in channels)
-                    Join(client, channel);
+                    Join(channel);
             };
 
             // Read commands from stdin until bot terminates.
@@ -115,11 +115,18 @@ namespace trurl
             Console.WriteLine("Disconnected from '{0}'.", serverName);
         }
 
-        private void Join(IrcClient client, string channel)
+        protected void Join(string channel)
         {
             client.Channels.Join(channel);
 
             Console.WriteLine("Joined '{0}'.", channel);
+        }
+
+        protected void Leave(string channel)
+        {
+            client.Channels.Leave(channel);
+
+            Console.WriteLine("Left '{0}'.", channel);
         }
 
         private bool ReadChatCommand(IrcClient client, IrcMessageEventArgs eventArgs)
@@ -142,8 +149,8 @@ namespace trurl
         {
             var defaultReplyTarget = GetDefaultReplyTarget(client, source, targets);
 
-            ChatCommandProcessor processor;
-            if (this.chatCommandProcessors.TryGetValue(command, out processor))
+            CommandProcessor processor;
+            if (this.commands.TryGetValue(command, out processor))
             {
                 try
                 {
@@ -296,7 +303,7 @@ namespace trurl
         #endregion
 
         #region "Subclass API"
-        protected abstract void InitializeChatCommandProcessors();
+        protected abstract void InitializeCommands();
 
         protected virtual void OnClientConnect(IrcClient client) { }
         protected virtual void OnClientDisconnect(IrcClient client) { }
@@ -311,6 +318,6 @@ namespace trurl
         protected virtual void OnChannelMessageReceived(IrcChannel channel, IrcMessageEventArgs e) { }
         #endregion
 
-        protected delegate void ChatCommandProcessor(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters);
+        protected delegate void CommandProcessor(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters);
     }
 }

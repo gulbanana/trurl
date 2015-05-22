@@ -6,7 +6,7 @@ namespace trurl
     {
         static void Main(string[] args)
         {
-            var bot = new Bot();
+            var bot = new DiceBot();
             
             var userInfo = new IrcUserRegistrationInfo()
             {

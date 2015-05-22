@@ -46,11 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bot.cs" />
-    <Compile Include="Commands.cs" />
+    <Compile Include="DiceBot.cs" />
     <Compile Include="Infrastructure\InsufficientPrivilegeException.cs" />
     <Compile Include="Infrastructure\InvalidCommandParametersException.cs" />
-    <Compile Include="Infrastructure\BotBase.cs" />
+    <Compile Include="Infrastructure\IrcBot.cs" />
     <Compile Include="Infrastructure\IrcBotException.cs" />
     <Compile Include="Dice.cs" />
     <Compile Include="Display.cs" />

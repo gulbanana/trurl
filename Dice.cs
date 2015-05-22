@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 static class Dice
 {
@@ -16,19 +17,19 @@ static class Dice
 			yield return d();
 	}
 
-	public static IEnumerable<IEnumerable<int>> N(int dice, Func<int> d, int explode)
+	public static IEnumerable<IList<int>> N(int dice, Func<int> d, int explode)
 	{
 		for (int i = 0; i < dice; i++)
-			yield return E(d, explode);
+			yield return E(d, explode).ToList();
 	}
 
 	public static IEnumerable<int> E(Func<int> d, int explode)
 	{
 		var roll = 0;
-		while (roll < explode)
-		{
-			roll = d();
-			yield return roll;
-		} 
-	}
+        do
+        {
+            roll = d();
+            yield return roll;
+        } while (roll >= explode);
+    }
 }

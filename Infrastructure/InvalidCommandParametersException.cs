@@ -43,12 +43,12 @@ namespace trurl
         public string GetMessage(string command)
         {
             if (this.MinParameters == 0 && this.MaxParameters == 0)
-                return string.Format("command {0} takes no params", command);
+                return string.Format("command {0} takes no params - try !help {0}", command);
             else if (this.MinParameters == this.MaxParameters)
-                return string.Format("command {0} takes {1} params", command,
+                return string.Format("command {0} takes {1} params - try !help {0}", command,
                     this.MinParameters);
             else
-                return string.Format("command {0} takes {1} to {2} params", command,
+                return string.Format("command {0} takes {1} to {2} params - try !help {0}", command,
                     this.MinParameters, this.MaxParameters);
         }
     }
