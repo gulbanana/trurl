@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 static class Dice
 {
 	private static readonly Random gen = new Random();
@@ -10,13 +13,13 @@ static class Dice
 	public static IEnumerable<int> N(int dice, Func<int> d)
 	{
 		for (int i = 0; i < dice; i++)
-			yield d();
+			yield return d();
 	}
 
 	public static IEnumerable<IEnumerable<int>> N(int dice, Func<int> d, int explode)
 	{
 		for (int i = 0; i < dice; i++)
-			yield E(d, explode);
+			yield return E(d, explode);
 	}
 
 	public static IEnumerable<int> E(Func<int> d, int explode)
@@ -25,7 +28,7 @@ static class Dice
 		while (roll < explode)
 		{
 			roll = d();
-			yield roll;
+			yield return roll;
 		} 
 	}
 }

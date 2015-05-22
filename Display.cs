@@ -1,4 +1,5 @@
-using Dice;
+using System.Linq;
+using System.Collections.Generic;
 
 static class Display
 {
