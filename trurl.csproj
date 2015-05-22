@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="IrcDotNet, Version=0.4.1.37926, Culture=neutral, PublicKeyToken=44f6d157e750246b, processorArchitecture=MSIL">
+      <HintPath>packages\IrcDotNet.0.4.1\lib\net40\IrcDotNet.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,7 +46,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bot.cs" />
     <Compile Include="Commands.cs" />
+    <Compile Include="Samples.Common\BasicIrcBot.cs" />
+    <Compile Include="Samples.Common\ConsoleUtilities.cs" />
+    <Compile Include="Samples.Common\InvalidCommandParametersException.cs" />
+    <Compile Include="Samples.Common\IrcBot.cs" />
+    <Compile Include="Samples.Common\IrcBotException.cs" />
+    <Compile Include="Samples.Common\IrcBotUtilities.cs" />
+    <Compile Include="Samples.Common\ProgramInfo.cs" />
     <Compile Include="Dice.cs" />
     <Compile Include="Display.cs" />
     <Compile Include="Program.cs" />
@@ -51,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
