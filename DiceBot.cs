@@ -8,7 +8,11 @@ namespace trurl
 {
     class DiceBot : BotBase
     {
-        public DiceBot() : base() { }
+        private readonly string[] admins;
+
+        public DiceBot(string[] adminList) : base() {
+            admins = adminList;
+        }
 
         protected override void InitializeCommands()
         {
@@ -156,7 +160,7 @@ namespace trurl
 
         private void CheckAdmin(IIrcMessageSource source)
         {
-            if (source.Name != "banana") throw new InsufficientPrivilegeException();
+            if (!admins.Any(a => a.Equals(source.Name, StringComparison.InvariantCultureIgnoreCase))) throw new InsufficientPrivilegeException();
         }
     }
 }

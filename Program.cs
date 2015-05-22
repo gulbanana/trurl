@@ -1,4 +1,5 @@
-﻿using IrcDotNet;
+﻿using System.Configuration;
+using IrcDotNet;
 
 namespace trurl
 {
@@ -6,17 +7,23 @@ namespace trurl
     {
         static void Main(string[] args)
         {
-            var bot = new DiceBot();
+            //Gather config
+            var server = ConfigurationManager.AppSettings["server"];
+            var nick = ConfigurationManager.AppSettings["nick"];
+            var channels = ConfigurationManager.AppSettings["channels"];
+            var admins = ConfigurationManager.AppSettings["admins"];
+
+            var bot = new DiceBot(admins.Split(','));
             
             var userInfo = new IrcUserRegistrationInfo()
             {
-                NickName = "trurl",
-                UserName = "trurl",
+                NickName = nick,
+                UserName = nick,
                 RealName = "Trurl Klapaucius, Cyberiad Dicebot"
             };
 
             //blocks until bot.Stop() is called or 'exit' is entered on the commandline
-            bot.Run("irc.sorcery.net", userInfo, new[] { "#au-ooc", "#aurora" });
+            bot.Run(server, userInfo, channels.Split(','));
         }
     }
 }
