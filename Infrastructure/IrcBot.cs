@@ -132,7 +132,7 @@ namespace trurl
         private bool ReadChatCommand(IrcClient client, IrcMessageEventArgs eventArgs)
         {
             // Check if given message represents chat command.
-            var line = eventArgs.Text.TrimEnd(' ');
+            var line = eventArgs.Text;
             if (line.Length > 1 && line.StartsWith("!"))
             {
                 // Process command.
