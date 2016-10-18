@@ -1,5 +1,5 @@
-﻿using System.Configuration;
-using IrcDotNet;
+﻿using IrcDotNet;
+using Microsoft.Extensions.Configuration;
 
 namespace trurl
 {
@@ -7,11 +7,14 @@ namespace trurl
     {
         static void Main(string[] args)
         {
-            //Gather config
-            var server = ConfigurationManager.AppSettings["server"];
-            var nick = ConfigurationManager.AppSettings["nick"];
-            var channels = ConfigurationManager.AppSettings["channels"];
-            var admins = ConfigurationManager.AppSettings["admins"];
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("config.json")
+                .Build();                         
+
+            var server = config["server"];
+            var nick = config["nick"];
+            var channels = config["channels"];
+            var admins = config["admins"];
 
             var bot = new DiceBot(admins.Split(','));
             

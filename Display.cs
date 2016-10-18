@@ -7,8 +7,8 @@ static class Display
 	{
 		return new Result {
 			Description = desc,
-			Summary = ok(rolls.Sum()),
-			Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => bad(r))))
+			Summary = notable(rolls.Sum()),
+			Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => digit(r))))
 		};
 	}
 
@@ -17,8 +17,8 @@ static class Display
         return new Result
         {
             Description = desc,
-            Summary = rolls.Sum() > 0 ? ok("+" + rolls.Sum().ToString()) : 
-                      ok(rolls.Sum()),
+            Summary = rolls.Sum() > 0 ? notable("+" + rolls.Sum().ToString()) : 
+                      notable(rolls.Sum()),
             Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => r > 0 ? good("+") : r < 0 ? bad("-") : " ")))
         };
     }
@@ -30,8 +30,8 @@ static class Display
 
         return new Result {
             Description = desc,
-            Summary = string.Format("[Successes: {0}, Failed: {1}]", ok(ss.Count()), ok(fs.Count())),
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? ok(r) : bad(r))))
+            Summary = string.Format("[Successes: {0}, Failed: {1}]", notable(ss.Count()), notable(fs.Count())),
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? notable(r) : digit(r))))
 		};
 	}
 
@@ -43,8 +43,8 @@ static class Display
         return new Result
         {
             Description = desc,
-            Summary = string.Format("[Successes: {0}, Failed: {1}]", ok(ss.Count()), ok(fs.Count())),
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= target) ? ok(r) : bad(r))))))
+            Summary = string.Format("[Successes: {0}, Failed: {1}]", notable(ss.Count()), notable(fs.Count())),
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= target) ? notable(r) : digit(r))))))
         };
     }
 
@@ -53,12 +53,17 @@ static class Display
         return string.Format("\x000309{0}\x03", text);
     }
 
-    private static string ok(object text)
+    private static string bad(object text)
+    {
+        return string.Format("\x000301{0}\x03", text);
+    }
+
+    private static string notable(object text)
     {
         return string.Format("\x000312{0}\x03", text);
     }
 
-    private static string bad(object text)
+    private static string digit(object text)
     {
         return string.Format("\x000305{0}\x03", text);
     }
