@@ -55,7 +55,7 @@ static class Display
 
     private static string bad(object text)
     {
-        return string.Format("\x000301{0}\x03", text);
+        return string.Format("\x000304{0}\x03", text);
     }
 
     private static string notable(object text)
