@@ -60,7 +60,11 @@ namespace trurl
                         client.LocalUser.SendMessage(replyTarget, "roll <count> <sides> <target>: roll dice and test against target numbers");
                         break;
 
-                    case "wodroll":
+                    case "fate":
+                        client.LocalUser.SendMessage(replyTarget, "fate: roll 4 FATE/FUDGE dice");
+                        break;
+
+                    case "wod":
                         client.LocalUser.SendMessage(replyTarget, "wodroll <count>: roll 10-again dice and report successes");
                         client.LocalUser.SendMessage(replyTarget, "wodroll <count> <n>: roll n-again dice and report successes");
                         break;
