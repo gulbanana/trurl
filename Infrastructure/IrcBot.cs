@@ -27,7 +27,7 @@ namespace trurl
         public BotBase()
         {
             this.isRunning = false;
-            this.commands = new Dictionary<string, CommandProcessor>(StringComparer.InvariantCultureIgnoreCase);
+            this.commands = new Dictionary<string, CommandProcessor>(StringComparer.CurrentCultureIgnoreCase);
             InitializeCommands();
         }
 

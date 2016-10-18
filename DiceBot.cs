@@ -176,7 +176,7 @@ namespace trurl
 
         private void CheckAdmin(IIrcMessageSource source)
         {
-            if (!admins.Any(a => a.ToLowerInvariant().Equals(source.Name.ToLowerInvariant()))) throw new InsufficientPrivilegeException();
+            if (!admins.Any(a => a.Equals(source.Name, StringComparison.CurrentCultureIgnoreCase))) throw new InsufficientPrivilegeException();
         }
     }
 }
