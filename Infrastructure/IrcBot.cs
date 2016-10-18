@@ -174,7 +174,7 @@ namespace trurl
             }
             else
             {
-                if (source is IIrcMessageTarget)
+                if (source is IIrcMessageTarget && defaultReplyTarget.All(t => !t.Name.StartsWith("#")))
                 {
                     client.LocalUser.SendNotice(defaultReplyTarget, string.Format("Command '{0}' not recognized.", command));
                 }
