@@ -21,7 +21,8 @@ namespace trurl
             this.Commands.Add("leave", Leave);
             this.Commands.Add("quit", Quit);
             this.Commands.Add("roll", Roll);
-            this.Commands.Add("wodroll", WodRoll);
+            this.Commands.Add("wod", WodRoll);
+            this.Commands.Add("fate", FateRoll);
         }
 
         private void Help(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
@@ -116,6 +117,17 @@ namespace trurl
 
                 DisplayRollResult(client, source, targets, result);
             }
+        }
+
+        private void FateRoll(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
+        {
+            CheckParams(parameters, 0, 0);
+
+            var rolls = N(4, () => D(3) - 2).ToList();
+
+            var result = Display.FATE("4dF", rolls);
+
+            DisplayRollResult(client, source, targets, result);
         }
 
         private void WodRoll(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
