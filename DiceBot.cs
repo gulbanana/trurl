@@ -22,6 +22,7 @@ namespace trurl
             this.Commands.Add("join", Join);
             this.Commands.Add("leave", Leave);
             this.Commands.Add("quit", Quit);
+            this.Commands.Add("rights", Rights);
             this.Commands.Add("roll", Roll);
             this.Commands.Add("wod", WodRoll);
             this.Commands.Add("fate", FateRoll);
@@ -55,6 +56,10 @@ namespace trurl
 
                     case "quit":
                         client.LocalUser.SendMessage(replyTarget, "quit: disconnects from irc");
+                        break;
+
+                    case "rights":
+                        client.LocalUser.SendMessage(replyTarget, "rights: check your privilege");
                         break;
 
                     case "roll":
@@ -96,6 +101,24 @@ namespace trurl
             CheckOwner(source);
 
             this.Stop();
+        }
+
+        private void Rights(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
+        {
+            var replyTarget = GetDefaultReplyTarget(client, source, targets);
+
+            if (owner.Equals(source.Name, StringComparison.CurrentCultureIgnoreCase)) 
+            {
+                client.LocalUser.SendMessage(replyTarget, "you are an owner, and may execute any command");
+            }
+            else if (admins.Any(a => a.Equals(source.Name, StringComparison.CurrentCultureIgnoreCase))) 
+            {
+                client.LocalUser.SendMessage(replyTarget, "you are an admin, and may execute any command except !quit");
+            }
+            else
+            {
+                client.LocalUser.SendMessage(replyTarget, "you have no rights");
+            }
         }
 
         private void Roll(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
