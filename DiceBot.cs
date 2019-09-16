@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using IrcDotNet;
-using static Dice;
+using static trurl.Dice;
 using System;
 
 namespace trurl
@@ -168,7 +168,7 @@ namespace trurl
             if (parameters.Count == 2)
             {
                 var explode = int.Parse(parameters[1]);
-                if (explode < 2) throw new Exception("minimum n-value = 2");
+                if (explode < 2) throw new LimitsExceededException(nameof(explode), 2);
 
                 var desc = string.Format("{0} dice ({1}-again)", count, explode);
                 var rolls = N(count, () => D(10), explode).ToList();
