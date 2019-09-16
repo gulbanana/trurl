@@ -8,10 +8,12 @@ namespace trurl
 {
     class DiceBot : BotBase
     {
+        private readonly string owner;
         private readonly string[] admins;
 
-        public DiceBot(string[] adminList) : base() {
-            admins = adminList;
+        public DiceBot(string owner, string[] admins) : base() {
+            this.owner = owner;
+            this.admins = admins;
         }
 
         protected override void InitializeCommands()
@@ -91,7 +93,7 @@ namespace trurl
         private void Quit(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
         {
             CheckParams(parameters, 0);
-            CheckAdmin(source);
+            CheckOwner(source);
 
             this.Stop();
         }
@@ -174,9 +176,14 @@ namespace trurl
                 throw new InvalidCommandParametersException(min, max);
         }
 
+        private void CheckOwner(IIrcMessageSource source)
+        {
+            if (!owner.Equals(source.Name, StringComparison.CurrentCultureIgnoreCase)) throw new InsufficientPrivilegeException("owner");
+        }
+
         private void CheckAdmin(IIrcMessageSource source)
         {
-            if (!admins.Any(a => a.Equals(source.Name, StringComparison.CurrentCultureIgnoreCase))) throw new InsufficientPrivilegeException();
+            if (!admins.Any(a => a.Equals(source.Name, StringComparison.CurrentCultureIgnoreCase))) throw new InsufficientPrivilegeException("admin");
         }
     }
 }

@@ -14,9 +14,10 @@ namespace trurl
             var server = config["server"];
             var nick = config["nick"];
             var channels = config["channels"];
+            var owner = config["owner"];
             var admins = config["admins"];
 
-            var bot = new DiceBot(admins.Split(','));
+            var bot = new DiceBot(owner, admins.Split(','));
             
             var userInfo = new IrcUserRegistrationInfo()
             {

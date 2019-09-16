@@ -1,6 +1,7 @@
 ﻿{
   "server": "irc.sorcery.net",
   "nick": "trurl",
-  "channels": "#au-ooc",
-  "admins": "banana,voxpvoxd"
+  "channels": "#au-ooc, #aurora",
+  "owner": "banana",
+  "admins": "banana,voxpvoxd,ferrinus,crion"
 }
