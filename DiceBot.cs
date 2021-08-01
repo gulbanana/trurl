@@ -3,6 +3,7 @@ using System.Linq;
 using IrcDotNet;
 using static trurl.Dice;
 using System;
+using System.Text.RegularExpressions;
 
 namespace trurl
 {
@@ -25,6 +26,7 @@ namespace trurl
             this.Commands.Add("rights", Rights);
             this.Commands.Add("roll", Roll);
             this.Commands.Add("wod", WodRoll);
+            this.Commands.Add("chance", WodChanceRoll);
             this.Commands.Add("fate", FateRoll);
         }
 
@@ -71,9 +73,16 @@ namespace trurl
                         client.LocalUser.SendMessage(replyTarget, "fate: roll 4 FATE/FUDGE dice");
                         break;
 
+                    case "chance":
+                        client.LocalUser.SendMessage(replyTarget, "chance: roll a chance die (TN 10, 1 is dramatic failure)");
+                        break;
+
                     case "wod":
-                        client.LocalUser.SendMessage(replyTarget, "wodroll <count>: roll 10-again dice and report successes");
-                        client.LocalUser.SendMessage(replyTarget, "wodroll <count> <n>: roll n-again dice and report successes");
+                        client.LocalUser.SendMessage(replyTarget, "wod <count> [<n=10>] [rote] [a<x>] [d<x>] [e<x>]: roll n-again dice and report successes");
+                        client.LocalUser.SendMessage(replyTarget, "'rote' applies the rote quality");
+                        client.LocalUser.SendMessage(replyTarget, "'eX' sets the exceptional success threshhold to X");
+                        client.LocalUser.SendMessage(replyTarget, "'aX' adds X successes ('a2' adds 2, etc)");
+                        client.LocalUser.SendMessage(replyTarget, "'dX' adds X successes only in the event of a hit (like weapon damage)");
                         break;
                 }
             }
@@ -161,29 +170,64 @@ namespace trurl
 
         private void WodRoll(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
         {
-            CheckParams(parameters, 1, 2);
+            CheckParams(parameters, 1);
 
             var count = int.Parse(parameters[0]);
 
-            if (parameters.Count == 2)
+            if (parameters.Count == 1 && count == 0)
             {
-                var explode = int.Parse(parameters[1]);
-                if (explode < 2) throw new LimitsExceededException(nameof(explode), 2);
-
-                var desc = string.Format("{0} dice ({1}-again)", count, explode);
-                var rolls = N(count, () => D(10), explode).ToList();
-                var result = Display.ExplodingSuccesses(desc, rolls, 8);
-
-                DisplayRollResult(client, source, targets, result);
+                WodChanceRoll(client, source, targets, command, new List<string>());
             }
             else
             {
-                var desc = string.Format("{0} dice (10-again)", count);
-                var rolls = N(count, () => D(10), 10).ToList();
-                var result = Display.ExplodingSuccesses(desc, rolls, 8);
+                var remainder = parameters.Skip(2);
+                if (!(parameters.Count >= 2 && int.TryParse(parameters[1], out var explode)))
+                {
+                    explode = 10;
+                    remainder = parameters.Skip(1);
+                }
+
+                if (explode < 8) throw new LimitsExceededException(nameof(explode), 8);
+
+                var autos = 0;
+                var damage = 0;
+                var exceptional = 5;
+                var rote = false;
+                foreach (var p in remainder)
+                {
+                    if (p.StartsWith('a') && int.TryParse(p[1..], out var a))
+                    {
+                        autos = a;
+                    }
+                    if (p.StartsWith('d') && int.TryParse(p[1..], out var d))
+                    {
+                        damage = d;
+                    }
+                    else if (p.StartsWith('e') && int.TryParse(p[1..], out var e))
+                    {
+                        exceptional = e;
+                    }
+                    else if (p == "rote")
+                    {
+                        rote = true;
+                    }
+                }
+
+                var desc = explode <= 10 ? string.Format("{0} dice ({1}-again)", count, explode) : $"{count} dice";
+                var rolls = N(count, () => D(10), explode).ToList();
+                var successes = rolls.SelectMany(x => x).Where(r => r >= 8);
+                var result = Display.ExplodingSuccesses(desc, rolls, 8, exceptional, autos + (successes.Any() ? damage : 0));
 
                 DisplayRollResult(client, source, targets, result);
             }
+        }
+
+        private void WodChanceRoll(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
+        {
+            var rolls = N(1, () => D(10)).ToList();
+            var result = Display.Binary("a chance die", rolls, 10, 1);
+
+            DisplayRollResult(client, source, targets, result);
         }
 
         private void DisplayRollResult(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, Result rollResult)

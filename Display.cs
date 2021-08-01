@@ -23,19 +23,32 @@ static class Display
         };
     }
 
-    public static Result Successes(string desc, IList<int> rolls, int target)
+    public static Result Binary(string desc, IList<int> rolls, int successTarget, int failureTarget)
+	{
+		var ss = rolls.Where(r => r >= successTarget);
+		var fs = rolls.Where(r => r <= failureTarget);
+
+        return new Result {
+            Description = desc,
+            Summary = ss.Count() == rolls.Count() ? "[Success]" : 
+                      fs.Count() == rolls.Count() ? $"[{bad("Dramatic Failure")}]" : "[Failure]",
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? notable(r) : digit(r))))
+		};
+	}
+
+    public static Result Successes(string desc, IList<int> rolls, int target, int extraSuccesses = 0)
 	{
 		var ss = rolls.Where(r => r >= target);
 		var fs = rolls.Where(r => r < target);
 
         return new Result {
             Description = desc,
-            Summary = string.Format("[Successes: {0}, Failed: {1}]", notable(ss.Count()), notable(fs.Count())),
+            Summary = ss.Any() ? string.Format("[Success: {0}]", notable(ss.Count() + extraSuccesses)) : "[Failure]",
             Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? notable(r) : digit(r))))
 		};
 	}
 
-    public static Result ExplodingSuccesses(string desc, IList<IList<int>> rolls, int target)
+    public static Result ExplodingSuccesses(string desc, IList<IList<int>> rolls, int target, int exceptional, int extraSuccesses = 0)
     {
         var ss = rolls.SelectMany(x => x).Where(r => r >= target);
         var fs = rolls.SelectMany(x => x).Where(r => r < target);
@@ -43,7 +56,8 @@ static class Display
         return new Result
         {
             Description = desc,
-            Summary = string.Format("[Successes: {0}, Failed: {1}]", notable(ss.Count()), notable(fs.Count())),
+            Summary = ss.Count() >= exceptional ? string.Format($"[{good("Exceptional Success")}: {notable(ss.Count() + extraSuccesses)}]") :
+                      (ss.Count() + extraSuccesses > 0) ? string.Format("[Success: {0}]", notable(ss.Count() + extraSuccesses)) : "[Failure]",
             Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= target) ? notable(r) : digit(r))))))
         };
     }
