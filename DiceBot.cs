@@ -191,7 +191,7 @@ namespace trurl
 
                 var autos = 0;
                 var damage = 0;
-                var exceptional = 5;
+                var exceptionalTarget = 5;
                 var rote = false;
                 foreach (var p in remainder)
                 {
@@ -205,7 +205,7 @@ namespace trurl
                     }
                     else if (p.StartsWith('e') && int.TryParse(p[1..], out var e))
                     {
-                        exceptional = e;
+                        exceptionalTarget = e;
                     }
                     else if (p == "rote")
                     {
@@ -213,11 +213,27 @@ namespace trurl
                     }
                 }
 
-                var desc = explode <= 10 ? string.Format("{0} dice ({1}-again)", count, explode) : $"{count} dice";
-                var rolls = N(count, () => D(10), explode).ToList();
-                var successes = rolls.SelectMany(x => x).Where(r => r >= 8);
-                var result = Display.ExplodingSuccesses(desc, rolls, 8, exceptional, autos + (successes.Any() ? damage : 0));
+                var qualifiers = new List<string>();
+                if (explode <= 10) qualifiers.Add($"{explode}-again");
+                if (rote) qualifiers.Add("rote");
+                
+                var desc = $"{count} dice"; 
+                if (qualifiers.Any()) desc += $" ({string.Join(", ", qualifiers)})";
 
+                var rolls = N(count, () => D(10), explode).ToList();
+                var lists = new List<IList<IList<int>>>{ rolls };
+                var successes = rolls.SelectMany(x => x).Where(r => r >= 8).Count();
+                var failures = rolls.SelectMany(x => x).Where(r => r < 8).Count();
+
+                if (rote)
+                {
+                    var roteRolls = N(failures, () => D(10), explode).ToList();
+                    lists.Add(roteRolls);
+                    successes += roteRolls.SelectMany(x => x).Where(r => r >= 8).Count();
+                }
+                
+                var exceptional = successes >= exceptionalTarget;
+                var result = Display.ExplodingSuccesses(desc, 8, successes + autos + (successes > 0 ? damage : 0), exceptional, lists);
                 DisplayRollResult(client, source, targets, result);
             }
         }

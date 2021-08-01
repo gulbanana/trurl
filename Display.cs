@@ -31,7 +31,7 @@ static class Display
         return new Result {
             Description = desc,
             Summary = ss.Count() == rolls.Count() ? "[Success]" : 
-                      fs.Count() == rolls.Count() ? $"[{bad("Dramatic Failure")}]" : "[Failure]",
+                      fs.Count() == rolls.Count() ? $"[{bad("Dramatic")} Failure]" : "[Failure]",
             Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? notable(r) : digit(r))))
 		};
 	}
@@ -39,7 +39,6 @@ static class Display
     public static Result Successes(string desc, IList<int> rolls, int target, int extraSuccesses = 0)
 	{
 		var ss = rolls.Where(r => r >= target);
-		var fs = rolls.Where(r => r < target);
 
         return new Result {
             Description = desc,
@@ -48,17 +47,21 @@ static class Display
 		};
 	}
 
-    public static Result ExplodingSuccesses(string desc, IList<IList<int>> rolls, int target, int exceptional, int extraSuccesses = 0)
+    public static Result ExplodingSuccesses(string desc, int successTarget, int successes, bool exceptional, IList<IList<IList<int>>> lists)
     {
-        var ss = rolls.SelectMany(x => x).Where(r => r >= target);
-        var fs = rolls.SelectMany(x => x).Where(r => r < target);
+        var resultLists = new List<string>();
+        foreach (var rolls in lists)
+        {
+            var ss = rolls.SelectMany(x => x).Where(r => r >= successTarget);
+            resultLists.Add(string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= successTarget) ? notable(r) : digit(r)))))));
+        }
 
         return new Result
         {
             Description = desc,
-            Summary = ss.Count() >= exceptional ? string.Format($"[{good("Exceptional Success")}: {notable(ss.Count() + extraSuccesses)}]") :
-                      (ss.Count() + extraSuccesses > 0) ? string.Format("[Success: {0}]", notable(ss.Count() + extraSuccesses)) : "[Failure]",
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= target) ? notable(r) : digit(r))))))
+            Summary = exceptional ? $"[{good("Exceptional")} Success: {notable(successes)}]" :
+                      successes > 0 ? $"[Success: {notable(successes)}]" : "[Failure]",
+            Verbose = string.Join(" ", resultLists)
         };
     }
 
