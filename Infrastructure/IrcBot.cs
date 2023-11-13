@@ -59,10 +59,17 @@ namespace trurl
             {
                 Console.WriteLine("bot running - type 'exit' or send !quit in irc to exit");
                 var line = Console.ReadLine();
-                if (line == null && !ignoreEOF)
+                if (line == null)
                 {
                     Console.WriteLine("EOF");
-                    break;
+                    if (ignoreEOF)
+                    {
+                        Thread.Sleep(Timeout.Infinite);
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
                 if (line.Length == 0)
