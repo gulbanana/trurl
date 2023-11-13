@@ -47,7 +47,7 @@ static class Display
 		};
 	}
 
-    public static Result ExplodingSuccesses(string desc, int successTarget, int successes, bool exceptional, IList<IList<IList<int>>> lists)
+    public static Result ExplodingSuccesses(string desc, int successTarget, int successes, int botches, bool exceptional, IList<IList<IList<int>>> lists)
     {
         var resultLists = new List<string>();
         foreach (var rolls in lists)
@@ -60,7 +60,8 @@ static class Display
         {
             Description = desc,
             Summary = exceptional ? $"[{good("Exceptional")} Success: {notable(successes)}]" :
-                      successes > 0 ? $"[Success: {notable(successes)}]" : "[Failure]",
+                      successes > 0 ? $"[Success: {notable(successes)}]" : 
+                      (botches > 0 ? $"[{bad("Dramatic")} Failure]" : "[Failure]"),
             Verbose = string.Join(" ", resultLists)
         };
     }

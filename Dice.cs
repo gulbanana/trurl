@@ -12,7 +12,7 @@ namespace trurl
 		{
 			if (sides > 10000) throw new LimitsExceededException(nameof(sides), 10000);
 
-			return gen.Next(sides)+1;
+			return gen.Next(1, sides+1);
 		}
 
 		public static IEnumerable<int> N(int dice, Func<int> d)
