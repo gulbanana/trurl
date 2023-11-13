@@ -1,4 +1,5 @@
-﻿using IrcDotNet;
+﻿using System.Linq;
+using IrcDotNet;
 using Microsoft.Extensions.Configuration;
 
 namespace trurl
@@ -17,7 +18,7 @@ namespace trurl
             var owner = config["owner"];
             var admins = config["admins"];
 
-            var bot = new DiceBot(owner, admins.Split(','));
+            var bot = new DiceBot(args.Contains("--daemon"), owner, admins.Split(','));
             
             var userInfo = new IrcUserRegistrationInfo()
             {

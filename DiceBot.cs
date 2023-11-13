@@ -12,7 +12,7 @@ namespace trurl
         private readonly string owner;
         private readonly string[] admins;
 
-        public DiceBot(string owner, string[] admins) : base() {
+        public DiceBot(bool ignoreEOF, string owner, string[] admins) : base(ignoreEOF) {
             this.owner = owner;
             this.admins = admins;
         }

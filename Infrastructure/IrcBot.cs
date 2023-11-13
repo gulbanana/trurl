@@ -15,6 +15,7 @@ namespace trurl
 
         // Regex for splitting space-separated list of command parts until first parameter that begins with '/'.
         private static readonly Regex commandPartsSplitRegex = new Regex("(?<! /.*) ", RegexOptions.None);
+        private readonly bool ignoreEOF;
 
         // Dictionary of all chat command processors, keyed by name.
         private IDictionary<string, CommandProcessor> commands;
@@ -24,11 +25,12 @@ namespace trurl
 
         IrcClient client;
 
-        public BotBase()
+        public BotBase(bool ignoreEOF)
         {
             this.isRunning = false;
             this.commands = new Dictionary<string, CommandProcessor>(StringComparer.CurrentCultureIgnoreCase);
             InitializeCommands();
+            this.ignoreEOF = ignoreEOF;
         }
 
         public virtual string QuitMessage
@@ -57,15 +59,25 @@ namespace trurl
             {
                 Console.WriteLine("bot running - type 'exit' or send !quit in irc to exit");
                 var line = Console.ReadLine();
-                if (line == null)
+                if (line == null && !ignoreEOF)
+                {
+                    Console.WriteLine("EOF");
                     break;
+                }
+
                 if (line.Length == 0)
+                {
                     continue;
+                }
 
                 if (line.Equals("exit"))
+                {
                     this.isRunning = false;
+                }
                 else
+                {
                     Console.WriteLine("unrecognised command (use 'exit' to quit)");
+                }
             }
 
             Disconnect(client);
