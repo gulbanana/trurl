@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
 
 static class Display
 {
@@ -8,7 +9,7 @@ static class Display
 		return new Result {
 			Description = desc,
 			Summary = notable(rolls.Sum()),
-			Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => digit(r))))
+			Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => normalDigit(r))))
 		};
 	}
 
@@ -32,7 +33,7 @@ static class Display
             Description = desc,
             Summary = ss.Count() == rolls.Count() ? "[Success]" : 
                       fs.Count() == rolls.Count() ? $"[{bad("Dramatic")} Failure]" : "[Failure]",
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? successDigit(r) : (r <= failureTarget ? bad(r) : digit(r)))))
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? successDigit(r) : (r <= failureTarget ? bad(r) : normalDigit(r)))))
 		};
 	}
 
@@ -43,17 +44,48 @@ static class Display
         return new Result {
             Description = desc,
             Summary = ss.Any() ? string.Format("[Success: {0}]", notable(ss.Count() + extraSuccesses)) : "[Failure]",
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? successDigit(r) : digit(r))))
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? successDigit(r) : normalDigit(r))))
 		};
 	}
 
     public static Result ExplodingSuccesses(string desc, int successTarget, int successes, int botches, bool exceptional, IList<IList<IList<int>>> lists)
     {
+        string fmtG(IList<int> g)
+        {
+            return string.Join("->", g.Select((r, ix) => fmtR(r, ix == g.Count-1)));
+        }
+
+        string fmtR(int r, bool last)
+        {
+            if (r >= successTarget)
+            {
+                if (!last)
+                {
+                    return good(r); 
+                }
+                else
+                {
+                    return successDigit(r);
+                }
+            }
+            else 
+            {
+                if (r == 1 && botches > 0)
+                {
+                    return bad(r);
+                }
+                else
+                {
+                    return normalDigit(r);
+                }
+            }
+        }
+
         var resultLists = new List<string>();
         foreach (var rolls in lists)
         {
             var ss = rolls.SelectMany(x => x).Where(r => r >= successTarget);
-            resultLists.Add(string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= successTarget) ? successDigit(r) : ((r == 1 && botches > 0) ? bad(r) : digit(r))))))));
+            resultLists.Add(string.Format("[{0}]", string.Join(" ", rolls.Select(fmtG))));
         }
 
         return new Result
@@ -86,7 +118,7 @@ static class Display
         return string.Format("{0}", text);
     }
 
-    private static string digit(object text)
+    private static string normalDigit(object text)
     {
         return string.Format("\x000314{0}\x03", text);
     }
