@@ -83,7 +83,7 @@ static class Display
 
     private static string successDigit(object text)
     {
-        return string.Format("\x0002{0}\x02", text);
+        return string.Format("{0}", text);
     }
 
     private static string digit(object text)
