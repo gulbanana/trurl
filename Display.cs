@@ -68,21 +68,21 @@ static class Display
 
     private static string good(object text)
     {
-        return string.Format("\x000309{0}\x03", text);
+        return string.Format("\x0309{0}\x03", text);
     }
 
     private static string bad(object text)
     {
-        return string.Format("\x000304{0}\x03", text);
+        return string.Format("\x0304{0}\x03", text);
     }
 
     private static string notable(object text)
     {
-        return string.Format("\x000312{0}\x03", text);
+        return string.Format("\x02{0}\x02", text);
     }
 
     private static string digit(object text)
     {
-        return string.Format("\x000305{0}\x03", text);
+        return string.Format("{0}", text);
     }
 }
