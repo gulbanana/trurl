@@ -17,7 +17,7 @@ static class Display
         return new Result
         {
             Description = desc,
-            Summary = rolls.Sum() > 0 ? notable("+" + rolls.Sum().ToString()) : 
+            Summary = rolls.Sum() > 0 ? notable("+" + rolls.Sum().ToString()) :
                       notable(rolls.Sum()),
             Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => r > 0 ? good("+") : r < 0 ? bad("-") : " ")))
         };
@@ -32,7 +32,7 @@ static class Display
             Description = desc,
             Summary = ss.Count() == rolls.Count() ? "[Success]" : 
                       fs.Count() == rolls.Count() ? $"[{bad("Dramatic")} Failure]" : "[Failure]",
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? notable(r) : digit(r))))
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? successDigit(r) : (r <= failureTarget ? bad(r) : digit(r)))))
 		};
 	}
 
@@ -43,7 +43,7 @@ static class Display
         return new Result {
             Description = desc,
             Summary = ss.Any() ? string.Format("[Success: {0}]", notable(ss.Count() + extraSuccesses)) : "[Failure]",
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? notable(r) : digit(r))))
+            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? successDigit(r) : digit(r))))
 		};
 	}
 
@@ -53,7 +53,7 @@ static class Display
         foreach (var rolls in lists)
         {
             var ss = rolls.SelectMany(x => x).Where(r => r >= successTarget);
-            resultLists.Add(string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= successTarget) ? notable(r) : digit(r)))))));
+            resultLists.Add(string.Format("[{0}]", string.Join(" ", rolls.Select(g => string.Join("->", g.Select(r => (r >= successTarget) ? successDigit(r) : ((r == 1 && botches > 0) ? bad(r) : digit(r))))))));
         }
 
         return new Result
@@ -77,6 +77,11 @@ static class Display
     }
 
     private static string notable(object text)
+    {
+        return string.Format("\x0002{0}\x02", text);
+    }
+
+    private static string successDigit(object text)
     {
         return string.Format("\x0002{0}\x02", text);
     }
