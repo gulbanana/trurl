@@ -12,9 +12,9 @@ var config = new ConfigurationBuilder()
 
 var server = config["server"];
 var nick = config["nick"];
-var channels = config["channels"];
-var owner = config["owner"];
-var admins = config["admins"];
+var channels = config["channels"] ?? "#au-ooc";
+var owner = config["owner"] ?? "banana";
+var admins = config["admins"] ?? "banana";
 
 var bot = new DiceBot(args.Contains("--daemon"), owner, admins.Split(','));
         

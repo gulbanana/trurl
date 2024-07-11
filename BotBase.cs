@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -8,20 +9,18 @@ using IrcDotNet;
 namespace trurl;
 
 // adapted from the multiclient framework in IrcDotNet samples.
-abstract class BotBase
+abstract partial class BotBase
 {
     private const int clientQuitTimeout = 1000;
 
     // Regex for splitting space-separated list of command parts until first parameter that begins with '/'.
-    private static readonly Regex commandPartsSplitRegex = new Regex("(?<! /.*) ", RegexOptions.None);
+    private static readonly Regex commandPartsSplitRegex = CommandPartsSplit();
+    [GeneratedRegex("(?<! /.*) ", RegexOptions.None)]
+    private static partial Regex CommandPartsSplit();
+
     private readonly bool ignoreEOF;
-
-    // Dictionary of all chat command processors, keyed by name.
-    protected IReadOnlyDictionary<string, Command> commands;
-
-    // True if the read loop is currently active, false if ready to terminate.
+    protected readonly IReadOnlyDictionary<string, Command> commands;
     private bool isRunning;
-
     private IrcClient client;
 
     public BotBase(bool ignoreEOF)
