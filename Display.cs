@@ -1,27 +1,27 @@
 using System.Linq;
 using System.Collections.Generic;
-using System.Threading;
+
+namespace trurl;
 
 static class Display
 {
 	public static Result Total(string desc, IList<int> rolls)
 	{
-		return new Result {
-			Description = desc,
-			Summary = notable(rolls.Sum()),
-			Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => normalDigit(r))))
-		};
+		return new Result(
+			Description: desc,
+			Summary: notable(rolls.Sum()),
+			Verbose: $"[{string.Join(" ", rolls.Select(r => normalDigit(r)))}]"
+		);
 	}
 
     public static Result FATE(string desc, IList<int> rolls)
     {
-        return new Result
-        {
-            Description = desc,
-            Summary = rolls.Sum() > 0 ? notable("+" + rolls.Sum().ToString()) :
-                      notable(rolls.Sum()),
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => r > 0 ? good("+") : r < 0 ? bad("-") : " ")))
-        };
+        return new Result(
+            Description: desc,
+            Summary: rolls.Sum() > 0 ? notable("+" + rolls.Sum().ToString()) :
+                     notable(rolls.Sum()),
+            Verbose: $"[{(string.Join(" ", rolls.Select(r => r > 0 ? good("+") : r < 0 ? bad("-") : " ")))}]"
+        );
     }
 
     public static Result Binary(string desc, IList<int> rolls, int successTarget, int failureTarget)
@@ -29,23 +29,23 @@ static class Display
 		var ss = rolls.Where(r => r >= successTarget);
 		var fs = rolls.Where(r => r <= failureTarget);
 
-        return new Result {
-            Description = desc,
-            Summary = ss.Count() == rolls.Count() ? "[Success]" : 
-                      fs.Count() == rolls.Count() ? $"[{bad("Dramatic")} Failure]" : "[Failure]",
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? successDigit(r) : (r <= failureTarget ? bad(r) : normalDigit(r)))))
-		};
+        return new Result(
+            Description: desc,
+            Summary: ss.Count() == rolls.Count() ? "[Success]" : 
+                     fs.Count() == rolls.Count() ? $"[{bad("Dramatic")} Failure]" : "[Failure]",
+            Verbose: string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= successTarget) ? successDigit(r) : (r <= failureTarget ? bad(r) : normalDigit(r)))))
+		);
 	}
 
     public static Result Successes(string desc, IList<int> rolls, int target, int extraSuccesses = 0)
 	{
 		var ss = rolls.Where(r => r >= target);
 
-        return new Result {
-            Description = desc,
-            Summary = ss.Any() ? string.Format("[Success: {0}]", notable(ss.Count() + extraSuccesses)) : "[Failure]",
-            Verbose = string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? successDigit(r) : normalDigit(r))))
-		};
+        return new Result(
+            Description: desc,
+            Summary: ss.Any() ? string.Format("[Success: {0}]", notable(ss.Count() + extraSuccesses)) : "[Failure]",
+            Verbose: string.Format("[{0}]", string.Join(" ", rolls.Select(r => (r >= target) ? successDigit(r) : normalDigit(r))))
+		);
 	}
 
     public static Result ExplodingSuccesses(string desc, int successTarget, int successes, int botches, bool exceptional, IList<IList<IList<int>>> lists)
@@ -88,14 +88,13 @@ static class Display
             resultLists.Add(string.Format("[{0}]", string.Join(" ", rolls.Select(fmtG))));
         }
 
-        return new Result
-        {
-            Description = desc,
-            Summary = exceptional ? $"[{good("Exceptional")} Success: {notable(successes)}]" :
-                      successes > 0 ? $"[Success: {notable(successes)}]" : 
-                      (botches > 0 ? $"[{bad("Dramatic")} Failure]" : "[Failure]"),
-            Verbose = string.Join(" ", resultLists)
-        };
+        return new Result(
+            Description: desc,
+            Summary: exceptional ? $"[{good("Exceptional")} Success: {notable(successes)}]" :
+                     successes > 0 ? $"[Success: {notable(successes)}]" : 
+                     (botches > 0 ? $"[{bad("Dramatic")} Failure]" : "[Failure]"),
+            Verbose: string.Join(" ", resultLists)
+        );
     }
 
     private static string good(object text)

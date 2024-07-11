@@ -1,6 +1,1 @@
-class Result
-{
-	public string Description {get; set;}
-	public string Summary {get; set;}
-	public string Verbose {get; set;}
-}
+record Result(string Description, string Summary, string Verbose);
