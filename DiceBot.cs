@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using static trurl.Dice;
 
 namespace trurl;
@@ -33,6 +34,7 @@ class DiceBot(bool ignoreEOF, string owner, string[] admins) : BotBase(ignoreEOF
             "'dX' adds X extra successes only when a success is rolled (for weapon damage)",
             "'tX' sets the target number to X (default 8)"        
         ]);
+
         yield return new("chance", WodChanceRoll, ["chance: roll a Storyteller chance die (TN 10, 1 is dramatic failure)"]);
 
         yield return new("scion", ScionRoll, [
@@ -40,6 +42,14 @@ class DiceBot(bool ignoreEOF, string owner, string[] admins) : BotBase(ignoreEOF
             "'aX' adds X successes ('a2' adds 2, etc)",
             "'eX' adds X extra successes only when a success is rolled (for enhancements)",
             "'tX' sets the target number to X (default 8)"
+        ]);
+        
+        yield return new("ex", ExaltedRoll, [
+            "ex <count> [t<x>] [d<x>] [r<xyz>] [a<x>] : roll n-again Exalted dice and report successes",
+            "'tX' sets the target number to X (default 7)",
+            "'dX' sets X and above to double (default 10)",
+            "'rXYZ' rerolls X, Y and Z",
+            "'aX' adds X successes ('a2' adds 2, etc)"            
         ]);
     }
 
@@ -249,7 +259,62 @@ class DiceBot(bool ignoreEOF, string owner, string[] admins) : BotBase(ignoreEOF
         DisplayRollResult(client, source, targets, result);
     }
 
-    private Result StorytellerRoll(int count, int explode, int targetNumber, int? exceptionalThreshold, int autos, int damage, bool rote, bool botch)
+    private void ExaltedRoll(IrcClient client, IIrcMessageSource source, IList<IIrcMessageTarget> targets, string command, IList<string> parameters)
+    {
+        CheckParams(parameters, 1);
+
+        if (!int.TryParse(parameters[0], out var count))
+        {
+            foreach (var target in targets)
+            {
+                client.LocalUser.SendMessage(target, "usage: !ex <count> [t<x>] [d<x>] [r<xyz>] [a<x>]");
+            }
+        }
+
+        var remainder = parameters.Skip(1);
+
+        var successTarget = 7;
+        var doubleTarget = 10;
+        List<int> rerolls = [];
+        var autos = 0;               
+        foreach (var p in remainder)
+        {
+            if (p.StartsWith('t') && int.TryParse(p[1..], out var t))
+            {
+                successTarget = t;
+            }
+            else if (p.StartsWith('d') && int.TryParse(p[1..], out var d))
+            {
+                doubleTarget = d;
+            }
+            else if (p.StartsWith('r'))
+            {
+                foreach (var digit in p[1..].Replace("10", "0"))
+                {
+                    if (int.TryParse([digit], out var r))
+                    {
+                        rerolls.Add(r == 0 ? 10 : r);
+                    }
+                }
+            }
+            else if (p.StartsWith('a') && int.TryParse(p[1..], out var a))
+            {
+                autos = a;
+            }
+        }
+
+        var desc = $"{count} {(count == 1 ? "die" : "dice")}, TN {successTarget}";
+
+        var rolls = N(count, () => D(10), rerolls).ToList();
+        var successes = rolls.SelectMany(g => g).Select(r => r < successTarget ? 0 : (r >= doubleTarget ? 2 : 1)).Sum();
+        var botches = rolls.Where(g => g.Last() == 1).Count();
+
+        var result = Display.CountedSuccesses(desc, successTarget, doubleTarget, successes + autos, botches, rolls);
+
+        DisplayRollResult(client, source, targets, result);
+    }
+
+    private static Result StorytellerRoll(int count, int explode, int targetNumber, int? exceptionalThreshold, int autos, int damage, bool rote, bool botch)
     {
         var qualifiers = new List<string>();
         if (explode <= 10)

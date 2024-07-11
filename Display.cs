@@ -1,5 +1,7 @@
 using System.Linq;
 using System.Collections.Generic;
+using System;
+using System.Text;
 
 namespace trurl;
 
@@ -84,7 +86,6 @@ static class Display
         var resultLists = new List<string>();
         foreach (var rolls in lists)
         {
-            var ss = rolls.SelectMany(x => x).Where(r => r >= successTarget);
             resultLists.Add(string.Format("[{0}]", string.Join(" ", rolls.Select(fmtG))));
         }
 
@@ -94,6 +95,58 @@ static class Display
                      successes > 0 ? $"[Success: {notable(successes)}]" : 
                      (botches > 0 ? $"[{bad("Dramatic")} Failure]" : "[Failure]"),
             Verbose: string.Join(" ", resultLists)
+        );
+    }
+
+    public static Result CountedSuccesses(string desc, int successTarget, int doubleTarget, int successes, int botches, IList<IList<int>> list)
+    {
+        string fmtG(IList<int> g)
+        {
+            var builder = new StringBuilder();
+
+            foreach (var r in g.Take(g.Count - 1))
+            {
+                builder.Append(fmtR(r, $"{r}->"));
+                builder.Append(notable(""));
+            }
+
+            builder.Append(fmtR(g.Last(), $"{g.Last()}"));
+
+            return builder.ToString();
+        }
+
+        string fmtR(int r, string t)
+        {
+            if (r >= successTarget)
+            {
+                if (r >= doubleTarget)
+                {
+                    return good(t);
+                }
+                else
+                {
+                    return successDigit(t);
+                }
+            }
+            else
+            {
+                if (r == 1 && successes == 0)
+                {
+                    return bad(t);
+                }
+                else
+                {
+                    return normalDigit(t);
+                }
+            }
+        }
+
+        return new Result(
+            Description: desc,
+            Summary: successes > 0 ? $"[{notable(successes)} successes]" :
+                     botches == 0 ? $"[{notable(0)} successes]" :
+                                    $"[{notable(bad(0))} successes]",
+            Verbose: string.Format("[{0}]", string.Join(" ", list.Select(fmtG)))
         );
     }
 
